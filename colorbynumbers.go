@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
 	tr "github.com/ayoformayo/colorbynumbers/proto"
+	jsonpb "github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -25,25 +25,28 @@ func fetchGTrain(w http.ResponseWriter, r *http.Request) {
 	resp, _ := http.Get("http://datamine.mta.info/mta_esi.php?key=c1fe4f67509bc093ccd9b8f9b73857f6&feed_id=31")
 	fmt.Println(resp.Status)
 	in, _ := ioutil.ReadAll(resp.Body)
-	message := &tr.FeedMessage{}
-	err := proto.Unmarshal(in, message)
+	message := tr.FeedMessage{}
+	err := proto.Unmarshal(in, &message)
 	if err != nil {
 		log.Fatalln("<<<<FAILED TO UNMARSHAL>>>>", err)
 	}
-	entity := message.GetEntity()
-	// fmt.Println(message)
-	now := uint64(time.Now().Unix())
-	for _, status := range entity {
-		status.GetTripUpdate()
-		timestamp := status.Vehicle.GetTimestamp()
-		update := status.GetTripUpdate()
-		trip := update.GetTrip()
-		stopTimeUpdate := update.GetStopTimeUpdate()
-		// fmt.Println("update=", update)
-		fmt.Println("stopTimeUpdate=", stopTimeUpdate)
-		fmt.Println("trip=", trip)
-		fmt.Printf("timeDiff = %d\n", now-timestamp)
+
+	marshaller := jsonpb.Marshaler{
+		EnumsAsInts:  false,
+		EmitDefaults: true,
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	mess := marshaller.Marshal(w, &message)
+	fmt.Println(mess)
+	// if er != nil {
+	// 	log.Fatalln("<<<<FAILED TO UNMARSHAL>>>>", err)
+	// }
+	// json.NewEncoder(w).Encode(mess)
+	// j, _ := json.Marshal(mess)
+	// w.Write(j)
+	// fmt.Println("mess=", mess)
 }
 
 // func handler(w http.ResponseWriter, r *http.Request) {

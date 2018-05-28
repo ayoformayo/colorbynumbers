@@ -27,6 +27,9 @@ class App extends Component {
         // console.log(data)
 
     	//地理データ読み込み
+      d3.json("http://localhost:8080/gtrain", response => response.json())
+      .then(data => console.log(data))
+
     	d3.json("/combined2-copy.geojson", response => response.json())
       .then(data => drawMaps(data))
 
